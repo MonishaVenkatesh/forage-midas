@@ -1,44 +1,44 @@
 package com.jpmc.midascore.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 
 @Entity
 public class TransactionRecord {
 
-	@Id
-	@GeneratedValue (strategy = GenerationType.IDENTITY)
-	private Long id;
-	private Long senderId;
-	private Long recipientId;
-	private double amount;
-	
-	public Long getId() {
-		return id;
-	}
-	public void setId(Long id) {
-		this.id = id;
-	}
-	public Long getSenderId() {
-		return senderId;
-	}
-	public void setSenderId(Long senderId) {
-		this.senderId = senderId;
-	}
-	public Long getRecipientId() {
-		return recipientId;
-	}
-	public void setRecipientId(Long recipientId) {
-		this.recipientId = recipientId;
-	}
-	public double getAmount() {
-		return amount;
-	}
-	public void setAmount(double amount) {
-		this.amount = amount;
-	}
-	
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
+    @ManyToOne
+    private UserRecord sender;
+
+    @ManyToOne
+    private UserRecord recipient;
+
+    private double amount;
+
+    public TransactionRecord() {}
+
+    public TransactionRecord(UserRecord sender, UserRecord recipient, double amount) {
+        this.sender = sender;
+        this.recipient = recipient;
+        this.amount = amount;
+    }
+
+    public Long getId() { return id; }
+
+    public UserRecord getSender() { return sender; }
+    public void setSender(UserRecord sender) {   
+        this.sender = sender;
+    }
+
+    public UserRecord getRecipient() { return recipient; }
+    public void setRecipient(UserRecord recipient) {  
+        this.recipient = recipient;
+    }
+
+    public double getAmount() { return amount; }
+    public void setAmount(double amount) {
+        this.amount = amount;
+    }
 }
