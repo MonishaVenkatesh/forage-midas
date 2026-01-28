@@ -1,9 +1,12 @@
 package com.jpmc.midascore.service;
 
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import com.jpmc.midascore.entity.TransactionRecord;
 import com.jpmc.midascore.entity.UserRecord;
+import com.jpmc.midascore.foundation.Incentive;
+import com.jpmc.midascore.foundation.Transaction;
 import com.jpmc.midascore.repository.TransactionRecordRepository;
 import com.jpmc.midascore.repository.UserRepository;
 
@@ -14,10 +17,12 @@ public class TransactionService {
 
     private final TransactionRecordRepository transactionRepo;
     private final UserRepository userRepo;
+    private final RestTemplate restTemplate; 
 
-    public TransactionService(TransactionRecordRepository transactionRepo, UserRepository userRepo) {
+    public TransactionService(TransactionRecordRepository transactionRepo, UserRepository userRepo, RestTemplate restTemplate) {
         this.transactionRepo = transactionRepo;
         this.userRepo = userRepo;
+        this.restTemplate = restTemplate;
     }
 
     @Transactional
@@ -34,22 +39,24 @@ public class TransactionService {
         if (sender.getBalance() < amount) {
             return false;
         }
+        
+        Transaction transaction = new Transaction();
+        transaction.setSenderId(senderId);
+        transaction.setRecipientId(recipientId);
+        transaction.setAmount((float) amount);
+        Incentive incentive = restTemplate.postForObject("http://localhost:8080/incentive", transaction, Incentive.class);
 
+        double incentiveAmount = incentive != null ? incentive.getAmount() : 0;
+        
         sender.setBalance(sender.getBalance() - (float) amount);
         recipient.setBalance(recipient.getBalance() + (float) amount);
 
         userRepo.save(sender);
         userRepo.save(recipient);
-        if(sender.getName().equals("waldorf") || recipient.getName().equals("waldorf")) {
-            System.out.println("Waldorf balance now: " + sender.getBalance() + " / " + recipient.getBalance());
-        }
 
-        TransactionRecord record = new TransactionRecord(sender, recipient, amount);
+        TransactionRecord record = new TransactionRecord(sender, recipient, amount, incentiveAmount);
         transactionRepo.save(record);
-        System.out.println("Processed transaction: sender=" + sender.getName() + 
-                ", recipient=" + recipient.getName() + 
-                ", amount=" + amount);
-
+   
         return true;
     }
 }
